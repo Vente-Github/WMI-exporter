@@ -2,7 +2,7 @@ version: '3.7'
 
 services:
   wmi-exporter:
-    image: ${IMAGE_NAME:-registry.gitlab.com/cabildo-tf/vente/deploy/ansible-playbook/master}:${IMAGE_TAG:-latest}
+    image: ${IMAGE_NAME:-registry.gitlab.com/cabildo-tf/vente/deploy/ansible/master}:${IMAGE_TAG:-latest}
     environment:
       TAG_HOSTS:
       HOSTS:
