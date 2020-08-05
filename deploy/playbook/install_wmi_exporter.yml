@@ -1,0 +1,89 @@
+---
+- hosts: windows
+  gather_facts: true 
+
+  vars:
+    # Installation path in server
+    wmi_exporter_install_path: C:\WMI_exporter
+
+    # Name of the service.
+    wmi_exporter_service_name: WMI_exporter
+
+    # The display name to set for the service.
+    wmi_exporter_display_name: WMI exporter
+
+    # The description to set for the service.
+    wmi_exporter_description: Export metrics
+
+    # Version
+    wmi_exporter_version: 0.12.0
+
+    # Architecture of the wmi exporter to be installed.
+    wmi_exporter_architecture: amd64
+
+    # Windows installation parameters for the wmi_exporter.
+    # Link: https://github.com/martinlindhe/wmi_exporter#installation
+
+    # As the `--collectors.enabled` flag, provide a comma-separated
+    # list of enabled collectors
+    wmi_exporter_enabled_collectors: cpu,cs,logical_disk,net,os,process,service,system
+
+    # The IP address to bind to. Defaults to 0.0.0.0
+    wmi_exporter_listen_addr: 0.0.0.0
+
+    # The port to bind to. Defaults to 9182.
+    wmi_exporter_listen_port: 9182
+
+    # The path at which to serve metrics. Defaults to `/metrics`
+    wmi_exporter_metrics_path: /metrics
+
+    # Query for filter services
+    wmi_exporter_services: "Name LIKE 'ArcGIS%'"
+
+    #https://github.com/martinlindhe/wmi_exporter/blob/master/docs/collector.process.md
+    wmi_exporter_process: Arc.+
+
+  tasks:
+    - name: Create directory {{ wmi_exporter_install_path }}
+      win_file:
+        path: "{{ wmi_exporter_install_path }}"
+        state: directory
+
+    - name: Download {{ wmi_exporter_service_name }}
+      vars:
+        var_url_base: https://github.com/martinlindhe/wmi_exporter
+        var_url: "{{ var_url_base }}/releases/download/v{{ wmi_exporter_version }}"
+        var_url_file: "wmi_exporter-{{ wmi_exporter_version }}-{{ wmi_exporter_architecture }}.exe"
+      win_get_url:
+        url: "{{ var_url }}/{{ var_url_file }}"
+        dest: '{{ wmi_exporter_install_path }}\wmi_exporter.exe'
+        follow_redirects: all
+
+    - name: Create service {{ wmi_exporter_service_name }}
+      win_service:
+        name: "{{ wmi_exporter_service_name }}"
+        display_name: "{{ wmi_exporter_display_name }}"
+        description: "{{ wmi_exporter_description }}"
+        start_mode: auto
+        state: restarted
+        path: >-
+          {{ wmi_exporter_install_path }}\\wmi_exporter.exe
+          --telemetry.path "{{ wmi_exporter_metrics_path }}"
+          --telemetry.addr "{{ wmi_exporter_listen_addr }}:{{ wmi_exporter_listen_port }}"
+          --collectors.enabled "{{ wmi_exporter_enabled_collectors }}"
+          --collector.service.services-where "{{ wmi_exporter_services }}"
+          --collector.process.whitelist "{{ wmi_exporter_process }}"
+
+    - name: 'Firewall rule to allow WMI exporter on TCP port {{ wmi_exporter_listen_port }}'
+      win_firewall_rule:
+        name: WMI_exporter
+        localport: '{{ wmi_exporter_listen_port }}'
+        action: allow
+        direction: in
+        protocol: tcp
+        state: present
+        enabled: yes
+
+    - name: Verify wmi_exporter reachable by HTTP
+      win_uri:
+        url: "http://{{ inventory_hostname }}:{{ wmi_exporter_listen_port }}{{ wmi_exporter_metrics_path }}"
