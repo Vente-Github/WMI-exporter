@@ -3,6 +3,7 @@ version: '3.7'
 services:
   wmi-exporter:
     image: ${IMAGE_NAME:-registry.gitlab.com/cabildo-tf/vente/deploy/ansible/master}:${IMAGE_TAG:-latest}
+    command: /playbook/install_wmi_exporter.yml
     environment:
       TAG_HOSTS:
       HOSTS:
