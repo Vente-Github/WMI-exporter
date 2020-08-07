@@ -27,7 +27,7 @@ services:
       resources:
         limits:
           cpus: '0.1'
-          memory: 30M
+          memory: 100M
         reservations:
           memory: 5M
 
