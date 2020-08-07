@@ -38,7 +38,7 @@
     wmi_exporter_metrics_path: /metrics
 
     # Query for filter services
-    wmi_exporter_services: "Name LIKE 'ArcGIS%'"
+    wmi_exporter_services: "Name LIKE '%ArcGIS%'"
 
     #https://github.com/martinlindhe/wmi_exporter/blob/master/docs/collector.process.md
     wmi_exporter_process: Arc.+
