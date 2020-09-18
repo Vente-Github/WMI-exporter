@@ -16,7 +16,7 @@
     wmi_exporter_description: Export metrics
 
     # Version
-    wmi_exporter_version: 0.12.0
+    wmi_exporter_version: 0.14.0
 
     # Architecture of the wmi exporter to be installed.
     wmi_exporter_architecture: amd64
