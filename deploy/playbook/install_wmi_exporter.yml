@@ -78,7 +78,7 @@
         start_mode: auto
         state: restarted
         path: >-
-          {{ wmi_exporter_install_path }}\\wmi_exporter.exe
+          {{ wmi_exporter_install_path }}\\wmi_exporter-{{ wmi_exporter_version }}.exe
           --telemetry.path "{{ wmi_exporter_metrics_path }}"
           --telemetry.addr "{{ wmi_exporter_listen_addr }}:{{ wmi_exporter_listen_port }}"
           --collectors.enabled "{{ wmi_exporter_enabled_collectors }}"
