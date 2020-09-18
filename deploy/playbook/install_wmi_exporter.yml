@@ -40,7 +40,7 @@
     # Query for filter services
     wmi_exporter_services: "Name LIKE '%ArcGIS%'"
 
-    #https://github.com/martinlindhe/wmi_exporter/blob/master/docs/collector.process.md
+    #https://github.com/prometheus-community/wmi_exporter/blob/master/docs/collector.process.md
     wmi_exporter_process: Arc.+
 
   tasks:
@@ -51,9 +51,9 @@
 
     - name: Download {{ wmi_exporter_service_name }}
       vars:
-        var_url_base: https://github.com/martinlindhe/wmi_exporter
+        var_url_base: https://github.com/prometheus-community/windows_exporter
         var_url: "{{ var_url_base }}/releases/download/v{{ wmi_exporter_version }}"
-        var_url_file: "wmi_exporter-{{ wmi_exporter_version }}-{{ wmi_exporter_architecture }}.exe"
+        var_url_file: "windows_exporter-{{ wmi_exporter_version }}-{{ wmi_exporter_architecture }}.exe"
       win_get_url:
         url: "{{ var_url }}/{{ var_url_file }}"
         dest: '{{ wmi_exporter_install_path }}\wmi_exporter.exe'
