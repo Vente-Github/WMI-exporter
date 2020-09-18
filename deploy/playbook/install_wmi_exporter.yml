@@ -44,6 +44,17 @@
     wmi_exporter_process: Arc.+
 
   tasks:
+    - name: Check if a service {{ wmi_exporter_service_name }} is installed
+      win_service:
+        name: "{{ wmi_exporter_service_name }}"
+      register: service_info
+
+    - name: Remove a service {{ wmi_exporter_service_name }}
+      win_service:
+        name: "{{ wmi_exporter_service_name }}"
+        state: absent
+      when: service_info.exists
+
     - name: Create directory {{ wmi_exporter_install_path }}
       win_file:
         path: "{{ wmi_exporter_install_path }}"
@@ -56,7 +67,7 @@
         var_url_file: "windows_exporter-{{ wmi_exporter_version }}-{{ wmi_exporter_architecture }}.exe"
       win_get_url:
         url: "{{ var_url }}/{{ var_url_file }}"
-        dest: '{{ wmi_exporter_install_path }}\wmi_exporter.exe'
+        dest: '{{ wmi_exporter_install_path }}\wmi_exporter-{{ wmi_exporter_version }}.exe'
         follow_redirects: all
 
     - name: Create service {{ wmi_exporter_service_name }}
