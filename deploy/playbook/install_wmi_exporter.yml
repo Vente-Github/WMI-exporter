@@ -77,6 +77,14 @@
         description: "{{ wmi_exporter_description }}"
         start_mode: auto
         state: restarted
+        failure_actions:
+          - type: restart
+            delay_ms: 60000
+          - type: restart
+            delay_ms: 60000
+          - type: none
+            delay_ms: 60000
+        failure_reset_period_sec: 86400
         path: >-
           {{ wmi_exporter_install_path }}\\wmi_exporter-{{ wmi_exporter_version }}.exe
           --telemetry.path "{{ wmi_exporter_metrics_path }}"
