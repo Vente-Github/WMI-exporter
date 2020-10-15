@@ -43,16 +43,26 @@
     #https://github.com/prometheus-community/wmi_exporter/blob/master/docs/collector.process.md
     wmi_exporter_process: Arc.+
 
+    admin_user: Administrator
+
   tasks:
     - name: Check if a service {{ wmi_exporter_service_name }} is installed
       win_service:
         name: "{{ wmi_exporter_service_name }}"
       register: service_info
 
+    - name: Stop service {{ wmi_exporter_service_name }}
+      become: yes
+      become_user: "{{ admin_user }}"
+      become_method: "runas"
+      win_command: sc stop {{wmi_exporter_service_name}}
+      when: service_info.exists
+
     - name: Remove a service {{ wmi_exporter_service_name }}
-      win_service:
-        name: "{{ wmi_exporter_service_name }}"
-        state: absent
+      become: yes
+      become_user: "{{ admin_user }}"
+      become_method: "runas"
+      win_command: sc delete {{wmi_exporter_service_name}}
       when: service_info.exists
 
     - name: Create directory {{ wmi_exporter_install_path }}
@@ -77,14 +87,6 @@
         description: "{{ wmi_exporter_description }}"
         start_mode: auto
         state: restarted
-        failure_actions:
-          - type: restart
-            delay_ms: 60000
-          - type: restart
-            delay_ms: 60000
-          - type: none
-            delay_ms: 60000
-        failure_reset_period_sec: 86400
         path: >-
           {{ wmi_exporter_install_path }}\\wmi_exporter-{{ wmi_exporter_version }}.exe
           --telemetry.path "{{ wmi_exporter_metrics_path }}"
@@ -92,6 +94,15 @@
           --collectors.enabled "{{ wmi_exporter_enabled_collectors }}"
           --collector.service.services-where "{{ wmi_exporter_services }}"
           --collector.process.whitelist "{{ wmi_exporter_process }}"
+
+    - name: Set recovery failure {{ wmi_exporter_service_name }}
+      become: yes
+      become_user: "{{ admin_user }}"
+      become_method: "runas"
+      vars:
+        delay_failure_ms: 60000
+        time_reset_count_s: 86400
+      win_command: sc failure {{ wmi_exporter_service_name }} actions= restart/{{ delay_failure_ms }}/restart/{{ delay_failure_ms }}/""/{{ delay_failure_ms }} reset= {{ time_reset_count_s }}
 
     - name: 'Firewall rule to allow WMI exporter on TCP port {{ wmi_exporter_listen_port }}'
       win_firewall_rule:
