@@ -85,7 +85,7 @@
         name: "{{ wmi_exporter_service_name }}"
         display_name: "{{ wmi_exporter_display_name }}"
         description: "{{ wmi_exporter_description }}"
-        start_mode: auto
+        start_mode: delayed
         state: restarted
         path: >-
           {{ wmi_exporter_install_path }}\\wmi_exporter-{{ wmi_exporter_version }}.exe
