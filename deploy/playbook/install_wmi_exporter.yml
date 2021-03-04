@@ -16,7 +16,7 @@
     wmi_exporter_description: Export metrics
 
     # Version
-    wmi_exporter_version: 0.15.0
+    wmi_exporter_version: "{{ lookup('env', 'WMI_EXPORTER_VERSION') }}"
 
     # Architecture of the wmi exporter to be installed.
     wmi_exporter_architecture: amd64
