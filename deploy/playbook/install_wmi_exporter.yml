@@ -4,7 +4,7 @@
 
   vars:
     # Installation path in server
-    wmi_exporter_install_path: C:\WMI_exporter
+    wmi_exporter_install_path: "{{ lookup('env', 'WORK_DIR') }}"
 
     # Name of the service.
     wmi_exporter_service_name: WMI_exporter
