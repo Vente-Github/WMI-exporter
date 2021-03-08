@@ -2,7 +2,8 @@ version: '3.7'
 
 services:
   wmi-exporter:
-    image: ${IMAGE_NAME:-registry.gitlab.com/cabildo-tf/vente/deploy/ansible-playbook/master}:${IMAGE_TAG:-latest}
+    image: ${IMAGE_NAME:-registry.gitlab.com/cabildo-tf/vente/deploy/ansible/master}:${IMAGE_TAG:-latest}
+    command: /playbook/install_wmi_exporter.yml
     environment:
       TAG_HOSTS:
       HOSTS:
@@ -13,6 +14,8 @@ services:
       ANSIBLE_PORT:
       ANSIBLE_WINRM_MESSAGE_ENCRYPTION:
       ANSIBLE_WINRM_TRANSPORT:
+      WMI_EXPORTER_VERSION:
+      WORK_DIR:
     configs:
       - source: install-wmi-exporter-config
         target: /playbook/install_wmi_exporter.yml
@@ -26,7 +29,7 @@ services:
       resources:
         limits:
           cpus: '0.1'
-          memory: 10M
+          memory: 100M
         reservations:
           memory: 5M
 

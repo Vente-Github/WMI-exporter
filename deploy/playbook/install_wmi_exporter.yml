@@ -4,7 +4,7 @@
 
   vars:
     # Installation path in server
-    wmi_exporter_install_path: C:\WMI_exporter
+    wmi_exporter_install_path: "{{ lookup('env', 'WORK_DIR') }}"
 
     # Name of the service.
     wmi_exporter_service_name: WMI_exporter
@@ -16,7 +16,7 @@
     wmi_exporter_description: Export metrics
 
     # Version
-    wmi_exporter_version: 0.12.0
+    wmi_exporter_version: "{{ lookup('env', 'WMI_EXPORTER_VERSION') }}"
 
     # Architecture of the wmi exporter to be installed.
     wmi_exporter_architecture: amd64
@@ -26,7 +26,7 @@
 
     # As the `--collectors.enabled` flag, provide a comma-separated
     # list of enabled collectors
-    wmi_exporter_enabled_collectors: cpu,cs,logical_disk,net,os,process,service,system
+    wmi_exporter_enabled_collectors: cpu,cs,logical_disk,net,os,process,service,system,iis
 
     # The IP address to bind to. Defaults to 0.0.0.0
     wmi_exporter_listen_addr: 0.0.0.0
@@ -38,12 +38,35 @@
     wmi_exporter_metrics_path: /metrics
 
     # Query for filter services
-    wmi_exporter_services: "Name LIKE 'ArcGIS%'"
+    wmi_exporter_services: "Name LIKE '%ArcGIS%' OR Name='W3SVC'"
 
-    #https://github.com/martinlindhe/wmi_exporter/blob/master/docs/collector.process.md
+    #https://github.com/prometheus-community/wmi_exporter/blob/master/docs/collector.process.md
     wmi_exporter_process: Arc.+
 
+    admin_user: Administrator
+
   tasks:
+    - name: Check if a service {{ wmi_exporter_service_name }} is installed
+      win_service:
+        name: "{{ wmi_exporter_service_name }}"
+      register: service_info
+
+    - name: Stop service {{ wmi_exporter_service_name }}
+      become: yes
+      become_user: "{{ admin_user }}"
+      become_method: "runas"
+      win_command: sc stop {{wmi_exporter_service_name}}
+      when: 
+        - service_info.exists
+        - service_info.state == "started"
+
+    - name: Remove a service {{ wmi_exporter_service_name }}
+      become: yes
+      become_user: "{{ admin_user }}"
+      become_method: "runas"
+      win_command: sc delete {{wmi_exporter_service_name}}
+      when: service_info.exists
+
     - name: Create directory {{ wmi_exporter_install_path }}
       win_file:
         path: "{{ wmi_exporter_install_path }}"
@@ -51,12 +74,12 @@
 
     - name: Download {{ wmi_exporter_service_name }}
       vars:
-        var_url_base: https://github.com/martinlindhe/wmi_exporter
+        var_url_base: https://github.com/prometheus-community/windows_exporter
         var_url: "{{ var_url_base }}/releases/download/v{{ wmi_exporter_version }}"
-        var_url_file: "wmi_exporter-{{ wmi_exporter_version }}-{{ wmi_exporter_architecture }}.exe"
+        var_url_file: "windows_exporter-{{ wmi_exporter_version }}-{{ wmi_exporter_architecture }}.exe"
       win_get_url:
         url: "{{ var_url }}/{{ var_url_file }}"
-        dest: '{{ wmi_exporter_install_path }}\wmi_exporter.exe'
+        dest: '{{ wmi_exporter_install_path }}\wmi_exporter-{{ wmi_exporter_version }}.exe'
         follow_redirects: all
 
     - name: Create service {{ wmi_exporter_service_name }}
@@ -64,15 +87,24 @@
         name: "{{ wmi_exporter_service_name }}"
         display_name: "{{ wmi_exporter_display_name }}"
         description: "{{ wmi_exporter_description }}"
-        start_mode: auto
+        start_mode: delayed
         state: restarted
         path: >-
-          {{ wmi_exporter_install_path }}\\wmi_exporter.exe
+          {{ wmi_exporter_install_path }}\\wmi_exporter-{{ wmi_exporter_version }}.exe
           --telemetry.path "{{ wmi_exporter_metrics_path }}"
           --telemetry.addr "{{ wmi_exporter_listen_addr }}:{{ wmi_exporter_listen_port }}"
           --collectors.enabled "{{ wmi_exporter_enabled_collectors }}"
           --collector.service.services-where "{{ wmi_exporter_services }}"
           --collector.process.whitelist "{{ wmi_exporter_process }}"
+
+    - name: Set recovery failure {{ wmi_exporter_service_name }}
+      become: yes
+      become_user: "{{ admin_user }}"
+      become_method: "runas"
+      vars:
+        delay_failure_ms: 60000
+        time_reset_count_s: 86400
+      win_command: sc failure {{ wmi_exporter_service_name }} actions= restart/{{ delay_failure_ms }}/restart/{{ delay_failure_ms }}/""/{{ delay_failure_ms }} reset= {{ time_reset_count_s }}
 
     - name: 'Firewall rule to allow WMI exporter on TCP port {{ wmi_exporter_listen_port }}'
       win_firewall_rule:
