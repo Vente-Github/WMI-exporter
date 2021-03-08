@@ -15,6 +15,7 @@ services:
       ANSIBLE_WINRM_MESSAGE_ENCRYPTION:
       ANSIBLE_WINRM_TRANSPORT:
       WMI_EXPORTER_VERSION:
+      WORK_DIR:
     configs:
       - source: install-wmi-exporter-config
         target: /playbook/install_wmi_exporter.yml

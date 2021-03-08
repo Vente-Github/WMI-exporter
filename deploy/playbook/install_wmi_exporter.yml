@@ -56,7 +56,9 @@
       become_user: "{{ admin_user }}"
       become_method: "runas"
       win_command: sc stop {{wmi_exporter_service_name}}
-      when: service_info.exists
+      when: 
+        - service_info.exists
+        - service_info.state == "started"
 
     - name: Remove a service {{ wmi_exporter_service_name }}
       become: yes
